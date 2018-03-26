@@ -19,8 +19,13 @@ Auth::routes();
 
 Route::get('/home', 'HomeController@index')->name('home');
 
-Route::get('/translations/find', 'TranslationController@findTranslations')->name('findTranslations');
+Route::get('/sources/find', 'SourceController@findSources')->name('findSources');
+Route::get('/sources', 'SourceController@index')->name('sources');
 
-Route::get('/languages', 'LanguageController@index')->name('languages');
+Route::resource('projects', 'ProjectController');
+Route::resource('languages', 'LanguageController');
+
+Route::get('/translations/export', 'TranslationController@export')->name('export');
+Route::get('/translations/exportaction', 'TranslationController@exportAction')->name('exportAction');
 
 

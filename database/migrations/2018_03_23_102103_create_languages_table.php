@@ -22,7 +22,7 @@ class CreateLanguagesTable extends Migration
             $table->string('name');
             $table->string('name_ascii');
             $table->tinyInteger('status');
-            
+            $table->timestamps();
         });
         
         DB::statement('SET FOREIGN_KEY_CHECKS = 1');
