@@ -31,8 +31,6 @@ class TranslationController extends Controller
             $data[$key][] = $source->key;  
         }
         
-        //dd($data);
-        
         $path = storage_path('app/public/translations/');
         
         $spreadsheet = new Spreadsheet();
