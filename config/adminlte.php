@@ -125,6 +125,11 @@ return [
             'icon'        => 'file',
         ],
         [
+            'text'        => 'Translations',
+            'url'         => 'translations',
+            'icon'        => 'mortar-board',
+        ],
+        [
             'text'        => 'Scan',
             'url'         => 'sources',
             'icon'        => 'search',

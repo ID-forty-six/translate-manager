@@ -15,4 +15,9 @@ class Translation extends Model
     {
         return $this->belongsTo('App\Source');
     }
+    
+    public function project()
+    {
+        return $this->belongsTo('App\Project');
+    }
 }

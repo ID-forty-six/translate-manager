@@ -8,19 +8,43 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\Finder\Finder;
 use App\Source;
+use App\Project;
+use Illuminate\Http\Request;
 
 class SourceController extends Controller
 {
     
     public function index()
     {
-        $sources = Source::all();
+        $projects = Project::all();
         
-        return view('sources.index')->with(['sources'=>$sources]);
+        if (isset($request->project_id))
+        { 
+            session([ 'project_id' => $request->project_id ]);
+        }
+        elseif(!session()->has('project_id') && !$projects->isEmpty())
+        {
+            session([ 'project_id' => $projects->first()->id ]);
+        }
+        
+        $sources = Source::all()->load([
+            'translations'=>function ($query) {
+                $query->where('project_id', session()->get('project_id'));
+            }
+        ]);
+        
+        return view('sources.index')->with(['sources'=>$sources, 'projects'=>$projects ]);
     }
     
-    public function findSources($path = '/var/www/localhost/sendinn5.5')
+    public function findSources(Request $request)
     {
+        
+        session([ 'project_id' => $request->project_id ]);
+        
+        $project = Project::find($request->project_id);
+        
+        $path = $project->path;
+        
         DB::table('sources')->truncate();
         
         $groupKeys = array();
@@ -96,7 +120,7 @@ class SourceController extends Controller
                 $source = new Source;
                 $source->key = $item;
                 $source->group = $group;
-                $source->project_id = 1;
+                $source->project_id = $project->id;
                 $source->save();
             }
         }

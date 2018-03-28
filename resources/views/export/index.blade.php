@@ -9,9 +9,31 @@
 @section('content')
 
 <div class="box box-primary">
-    <div class="box-footer">
-        <a href="{{ route('exportAction') }}" class="btn btn-lg btn-success">Export</a>
-    </div>
+    <form role="form" action="{{ route('exportAction') }}" }} method='GET'>
+        {{ csrf_field() }}
+        <div class="box-body">
+              <div class="form-group">
+                <label for="project_id">Project</label>
+                <select id="project_id" name="project_id" class="form-control">
+                    @foreach( $projects as $project )
+                        <option value="{{ $project->id }}" {{ $project->id == session()->get('project_id') ? "selected" : ""}}>{{ $project->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="language_id">Language</label>
+                <select id="language_id" name="language_id" class="form-control">
+                    @foreach( $languages as $language )
+                        <option value="{{ $language->id }}" {{ $language->id == session()->get('language_id') ? "selected" : ""}}>{{ $language->id }}</option>
+                    @endforeach
+                </select>
+            </div>
+        </div>
+    
+        <div class="box-footer">
+            <button type="submit" class="btn btn-danger btn-lg">Submit</button>
+        </div>
+    </form>
 </div>
           
 @stop

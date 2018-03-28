@@ -20,7 +20,8 @@ class CreateTranslationsTable extends Migration
 			$table->increments('id');
 			$table->integer('source_id');
 			$table->string('language_id');
-            $table->string('translation');
+            $table->string('translation')->nullable();
+            $table->string('project_id');
 			$table->timestamps();
         });
     }

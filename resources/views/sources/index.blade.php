@@ -7,9 +7,27 @@
 @stop
 
 @section('content')
-
-<a href="{{ route('findSources') }}" class="btn btn-lg btn-success">Find sources</a>
-
+<div class="box">
+<div class="box-body">
+   <form role="form" action={{ route('findSources') }} method='post'>
+        {{ csrf_field() }}
+              <div class="form-group">
+                  <label for="project_id">Project</label>
+                  <select id="project_id" name="project_id" class="form-control">
+                      
+                      @foreach( $projects as $project )
+                      
+                      <option value="{{ $project->id }}" {{ $project->id == session()->get('project_id') ? "selected" : ""}}>{{ $project->name }}</option>
+                      
+                      @endforeach
+                </select>
+            </div>
+            <div class="box-footer">
+            <button type="submit" class="btn btn-danger">Submit</button>
+        </div>
+    </form>
+</div>
+</div>
 <div class="box">
     <div class="box-body no-padding">
         <table class="table table-striped">

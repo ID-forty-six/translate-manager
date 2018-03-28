@@ -17,4 +17,5 @@ class Source extends Model
     {
         return $this->hasMany('App\Translation');
     }
+
 }
