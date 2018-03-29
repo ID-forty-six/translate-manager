@@ -1,15 +1,15 @@
 @extends('adminlte::page')
 
-@section('title', 'Export')
+@section('title', 'Import')
 
 @section('content_header')
-    <h1>Export</h1>
+    <h1>Import</h1>
 @stop
 
 @section('content')
 
 <div class="box box-primary">
-    <form role="form" action="{{ route('exportAction') }}" method='POST'>
+    <form role="form" action="{{ route('importAction') }}" method='POST' enctype="multipart/form-data">
         {{ csrf_field() }}
         <div class="box-body">
               <div class="form-group">
@@ -27,6 +27,10 @@
                         <option value="{{ $language->id }}" {{ $language->id == session()->get('language_id') ? "selected" : ""}}>{{ $language->id }}</option>
                     @endforeach
                 </select>
+            </div>
+            <div class="form-group">
+                <label for="upload">Select file</label>
+                <input type="file" id="upload" name="upload" class="form-control" required>
             </div>
         </div>
     

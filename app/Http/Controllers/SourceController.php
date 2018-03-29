@@ -51,7 +51,7 @@ class SourceController extends Controller
         $stringKeys = array();
         $functions =  array('trans', 'trans_choice', 'Lang::get', 'Lang::choice', 'Lang::trans', 'Lang::transChoice', '@lang', '@choice', '__');
 
-        $groupPattern =                              // See http://regexr.com/392hu
+        /*$groupPattern =                              // See http://regexr.com/392hu
             "[^\w|>]".                          // Must not have an alphanum or _ or > before real method
             "(".implode('|', $functions) .")".  // Must start with one of the functions
             "\(".                               // Match opening parenthesis
@@ -62,7 +62,7 @@ class SourceController extends Controller
             ")".                                // Close group
             "[\'\"]".                           // Closing quote
             "[\),]";                            // Close parentheses or new parameter
-
+*/
         $stringPattern =
             "[^\w|>]".                                     // Must not have an alphanum or _ or > before real method
             "(".implode('|', $functions) .")".             // Must start with one of the functions
@@ -80,12 +80,12 @@ class SourceController extends Controller
         /** @var \Symfony\Component\Finder\SplFileInfo $file */
         foreach ($finder as $file) {
             // Search the current file for the pattern
-            if(preg_match_all("/$groupPattern/siU", $file->getContents(), $matches)) {
+            /*if(preg_match_all("/$groupPattern/siU", $file->getContents(), $matches)) {
                 // Get all matches
                 foreach ($matches[2] as $key) {
                     $groupKeys[] = $key;
                 }
-            }
+            }*/
 
             if(preg_match_all("/$stringPattern/siU", $file->getContents(), $matches)) {
                 foreach ($matches['string'] as $key) {
@@ -100,10 +100,10 @@ class SourceController extends Controller
         }
         
         // Remove duplicates
-        $groupKeys = array_unique($groupKeys);
+        //$groupKeys = array_unique($groupKeys);
         $stringKeys = array_unique($stringKeys);
         
-        foreach($groupKeys as $groupkey)
+        /*foreach($groupKeys as $groupkey)
         {
             // kad isvengt pvz (excl. VAT) suamisymo su grupe
             if(strpos($groupkey, " ") !== false)
@@ -123,7 +123,7 @@ class SourceController extends Controller
                 $source->project_id = $project->id;
                 $source->save();
             }
-        }
+        }*/
         
         foreach($stringKeys as $key)
         {

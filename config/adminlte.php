@@ -141,7 +141,7 @@ return [
         ],
         [
             'text'        => 'Import',
-            'url'         => 'admin/pages',
+            'url'         => 'translations/import',
             'icon'        => 'upload',
         ],
     ],

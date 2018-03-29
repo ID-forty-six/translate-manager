@@ -27,5 +27,7 @@ Route::resource('languages', 'LanguageController');
 
 Route::get('/translations', 'TranslationController@index')->name('translations.index');
 Route::get('/translations/export', 'TranslationController@export')->name('export');
-Route::get('/translations/exportaction', 'TranslationController@exportAction')->name('exportAction');
+Route::post('/translations/exportaction', 'TranslationController@exportAction')->name('exportAction');
+Route::get('/translations/import', 'TranslationController@import')->name('import');
+Route::post('/translations/importaction', 'TranslationController@importAction')->name('importAction');
 Route::post('/translations/findorcreate', 'TranslationController@findOrCreate')->name('translations.findOrCreate');

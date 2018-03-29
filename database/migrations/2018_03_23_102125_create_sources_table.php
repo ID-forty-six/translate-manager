@@ -19,7 +19,6 @@ class CreateSourcesTable extends Migration
 			
 			$table->increments('id');
 			$table->string('key');
-			$table->string('group')->nullable();
             $table->string('project_id');
 			$table->timestamps();
             

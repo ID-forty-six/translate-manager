@@ -12,6 +12,7 @@ use DB;
 use Carbon\Carbon;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Storage;
 
 
 class TranslationController extends Controller
@@ -149,5 +150,107 @@ class TranslationController extends Controller
         }
         
         return redirect()->back();   
+    }
+    
+    public function import()
+    {
+        $projects = Project::all();
+        $languages = Language::all();
+        return view('import.index')->with(['projects'=>$projects, 'languages'=>$languages]);   
+    }
+    
+    public function importAction( Request $request )
+    {
+        if (isset($request->language_id))
+        { 
+            session([ 'language_id' => $request->language_id ]);
+        }
+        
+        if (isset($request->project_id))
+        { 
+            session([ 'project_id' => $request->project_id ]);
+        }
+        
+        $language_id = session()->get('language_id');
+        $project_id = session()->get('project_id');
+        
+        //TODO perkelti i use
+        $reader = new \PhpOffice\PhpSpreadsheet\Reader\Xlsx();
+        $reader->setReadDataOnly(true);
+        $spreadsheet = $reader->load($request->file('upload'));
+        
+        $translations_array = $spreadsheet->getActiveSheet()->toArray();
+    
+        $sources = array();
+        
+        $translations = Translation::where('project_id',$project_id)
+                ->where('language_id', $language_id)
+                ->get();
+        
+        foreach ($translations_array as $key=>$item) 
+        {
+            if($item[0] == null || $item[1] == null)
+            {
+                return response("ERROR - row($key): missing source id or key"); 
+            }
+                
+            $source = Source::find($item[0]);
+            
+            if(!$source)
+            {
+                return response("ERROR - source(id=$item[0]) does not exist!");  
+            }
+            
+            $translation = Translation::where('source_id', $source->id)
+                ->where('project_id', $project_id)
+                ->where('language_id', $language_id)
+                ->first(); 
+            
+            // tikrinam ar sutampa ID ir keys
+            if( $item[1] != $translation->source->key)
+            {
+                $en_translation = Translation::where('source_id', $source->id)
+                    ->where('project_id', $project_id)
+                    ->where('language_id', 'en-US')
+                    ->first();
+                
+                if($translation && $en_translation->$translation != $item[0])
+                {
+                   return response("ERROR - translation(id=$translation->id): different keys");  
+                }
+            }
+                
+            if($translation)
+            {
+                $translation->translation = $item[2];
+                $translation->save();  
+            }
+            else
+            {
+                $translation = new Translation;
+                $translation->source_id = $source->id;
+                $translation->translation = $item[2];
+                $translation->language_id = $language_id;
+                $translation->project_id = $project_id;
+                $translation->save();    
+            }
+        }
+        
+        $project = Project::find($project_id);
+        
+        $translations_array = array();
+        
+        foreach($translations as $translation)
+        {
+            $translations_array[$translation->source->key] = $translation->translation;
+        } 
+        
+        $json = json_encode($translations_array);
+        
+        $file_path = '/var/www/localhost/translate-manager/resources/lang/en.json';
+        
+        file_put_contents($file_path, $json);
+        
+        return redirect()->route('import');
     }
 }
