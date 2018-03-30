@@ -10,6 +10,7 @@ use Symfony\Component\Finder\Finder;
 use App\Source;
 use App\Project;
 use Illuminate\Http\Request;
+use Session;
 
 class SourceController extends Controller
 {
@@ -45,24 +46,10 @@ class SourceController extends Controller
         
         $path = $project->path;
         
-        DB::table('sources')->truncate();
-        
         $groupKeys = array();
         $stringKeys = array();
         $functions =  array('trans', 'trans_choice', 'Lang::get', 'Lang::choice', 'Lang::trans', 'Lang::transChoice', '@lang', '@choice', '__');
 
-        /*$groupPattern =                              // See http://regexr.com/392hu
-            "[^\w|>]".                          // Must not have an alphanum or _ or > before real method
-            "(".implode('|', $functions) .")".  // Must start with one of the functions
-            "\(".                               // Match opening parenthesis
-            "[\'\"]".                           // Match " or '
-            "(".                                // Start a new group to match:
-                "[a-zA-Z0-9_-]+".               // Must start with group
-                "([.|\/][^\1)]+)+".             // Be followed by one or more items/keys
-            ")".                                // Close group
-            "[\'\"]".                           // Closing quote
-            "[\),]";                            // Close parentheses or new parameter
-*/
         $stringPattern =
             "[^\w|>]".                                     // Must not have an alphanum or _ or > before real method
             "(".implode('|', $functions) .")".             // Must start with one of the functions
@@ -80,12 +67,6 @@ class SourceController extends Controller
         /** @var \Symfony\Component\Finder\SplFileInfo $file */
         foreach ($finder as $file) {
             // Search the current file for the pattern
-            /*if(preg_match_all("/$groupPattern/siU", $file->getContents(), $matches)) {
-                // Get all matches
-                foreach ($matches[2] as $key) {
-                    $groupKeys[] = $key;
-                }
-            }*/
 
             if(preg_match_all("/$stringPattern/siU", $file->getContents(), $matches)) {
                 foreach ($matches['string'] as $key) {
@@ -100,30 +81,9 @@ class SourceController extends Controller
         }
         
         // Remove duplicates
-        //$groupKeys = array_unique($groupKeys);
         $stringKeys = array_unique($stringKeys);
         
-        /*foreach($groupKeys as $groupkey)
-        {
-            // kad isvengt pvz (excl. VAT) suamisymo su grupe
-            if(strpos($groupkey, " ") !== false)
-            {
-                break;
-            }
-            
-            list($group, $item) = explode('.', $groupkey, 2);
-            
-            $source = Source::where('key', $item)->where('group', $group)->first();
-            
-            if (!$source)
-            {
-                $source = new Source;
-                $source->key = $item;
-                $source->group = $group;
-                $source->project_id = $project->id;
-                $source->save();
-            }
-        }*/
+        $count = 0;
         
         foreach($stringKeys as $key)
         {
@@ -133,11 +93,14 @@ class SourceController extends Controller
             {
                 $source = new Source;
                 $source->key = $key;
-                $source->project_id = 1;
+                $source->project_id = $project->id;
                 $source->save();
+                $count++;
             }
         }
         
-        return redirect('sources');
+        Session::flash('message', "Scan completed. $count new sources added");
+        
+        return redirect()->route('sources');
     }
 }

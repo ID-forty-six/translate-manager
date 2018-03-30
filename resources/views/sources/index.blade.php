@@ -7,6 +7,15 @@
 @stop
 
 @section('content')
+
+@if( session()->has('message') )
+    <div class="box-body no-padding">
+        <div class="alert alert-success">
+            {{ session()->get('message') }}
+        </div>  
+    </div> 
+@endif
+
 <div class="box">
 <div class="box-body">
    <form role="form" action={{ route('findSources') }} method='post'>
@@ -27,26 +36,6 @@
         </div>
     </form>
 </div>
-</div>
-<div class="box">
-    <div class="box-body no-padding">
-        <table class="table table-striped">
-            <tr>
-                <th>ID</th>
-                <th>Key</th>
-                <th>Group</th>
-                <th>project</th>
-            </tr>
-            @foreach( $sources as $source )
-                <tr>
-                    <td>{{ $source->id }}</td>
-                    <td>{{ $source->key }}</td>
-                    <td>{{ $source->group }}</td>
-                    <td>{{ $source->project->name }}</td>
-                </tr> 
-            @endforeach 
-        </table>
-    </div>
 </div>
 
 @stop

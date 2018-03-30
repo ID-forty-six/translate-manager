@@ -8,6 +8,14 @@
 
 @section('content')
 
+@if( session()->has('message') )
+    <div class="box-body no-padding">
+        <div class="alert alert-success">
+            {{ session()->get('message') }}
+        </div>  
+    </div> 
+@endif
+
 <div class="box box-primary">
     <form role="form" action="{{ route('exportAction') }}" method='POST'>
         {{ csrf_field() }}

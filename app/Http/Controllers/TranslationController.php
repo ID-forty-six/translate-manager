@@ -13,6 +13,7 @@ use Carbon\Carbon;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Storage;
+use Session;
 
 
 class TranslationController extends Controller
@@ -125,6 +126,8 @@ class TranslationController extends Controller
         
         $writer->save($path.$project->name.'_'.$language_id.'_'.$timestamp.'.xlsx');
         
+        Session::flash('message', "File $project->name $language_id $timestamp.xlsx exported to $path");
+        
         return redirect()->route('export');
     }
     
@@ -187,36 +190,47 @@ class TranslationController extends Controller
                 ->where('language_id', $language_id)
                 ->get();
         
+        $count = 0;
+        $import_errors = array();
+        
         foreach ($translations_array as $key=>$item) 
         {
             if($item[0] == null || $item[1] == null)
             {
-                return response("ERROR - row($key): missing source id or key"); 
+                $import_errors[$key] = "ERROR - import file, row($key): missing source id or key";
+                continue;
             }
                 
             $source = Source::find($item[0]);
             
             if(!$source)
             {
-                return response("ERROR - source(id=$item[0]) does not exist!");  
+                $import_errors[$key] = "ERROR - import file, row($key): source(id=$item[0]) does not exist!";
+                continue;
             }
             
             $translation = Translation::where('source_id', $source->id)
                 ->where('project_id', $project_id)
                 ->where('language_id', $language_id)
-                ->first(); 
+                ->first();
             
             // tikrinam ar sutampa ID ir keys
-            if( $item[1] != $translation->source->key)
+            if( $item[1] != $source->key)
             {
                 $en_translation = Translation::where('source_id', $source->id)
                     ->where('project_id', $project_id)
                     ->where('language_id', 'en-US')
                     ->first();
                 
-                if($translation && $en_translation->$translation != $item[0])
+                if(!$en_translation)  
                 {
-                   return response("ERROR - translation(id=$translation->id): different keys");  
+                    $import_errors[$key] = "ERROR - import file, row($key): source(id=$source->id) has different key than import file. En translation doesn't exist."; 
+                    continue; 
+                }
+                elseif($en_translation->$translation != $item[1])
+                {
+                    $import_errors[$key] = "ERROR - import file, row($key): source(id=$source->id) has different key than import file. En translation exists."; 
+                    continue;
                 }
             }
                 
@@ -232,10 +246,23 @@ class TranslationController extends Controller
                 $translation->translation = $item[2];
                 $translation->language_id = $language_id;
                 $translation->project_id = $project_id;
-                $translation->save();    
+                $translation->save();
+                $count++;
             }
         }
+        die(print_r($import_errors));
+        if($import_errors)
+        {
+            Session::flash('errors', [$import_errors]);
+        }
         
+        Session::flash('message', "Imported $count new translations");
+        
+        return redirect()->route('import');
+    }
+    
+    public function publish()
+    {
         $project = Project::find($project_id);
         
         $translations_array = array();
@@ -250,6 +277,8 @@ class TranslationController extends Controller
         $file_path = '/var/www/localhost/translate-manager/resources/lang/en.json';
         
         file_put_contents($file_path, $json);
+        
+        Session::flash('message', "File $project->name_$language_id_$timestamp.xlsx imported to $path");
         
         return redirect()->route('import');
     }

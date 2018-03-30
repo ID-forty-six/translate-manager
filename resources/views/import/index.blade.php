@@ -8,6 +8,23 @@
 
 @section('content')
 
+@if( session()->has('message') )
+    <div class="box-body no-padding">
+        <div class="alert alert-success">
+            {{ session()->get('message') }}
+        </div>  
+    </div> 
+@endif
+
+@if( session()->has('import_errors') )
+BADDDDDDDDDDDDDDD
+    <div class="box-body no-padding">
+        <div class="alert alert-success">
+            {{ print_r(session()->get('import_errors')) }}
+        </div>  
+    </div> 
+@endif
+
 <div class="box box-primary">
     <form role="form" action="{{ route('importAction') }}" method='POST' enctype="multipart/form-data">
         {{ csrf_field() }}
