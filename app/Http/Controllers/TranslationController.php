@@ -69,16 +69,12 @@ class TranslationController extends Controller
             session([ 'language_id' => $request->language_id ]);
         }
         
-        if (isset($request->project_id))
-        { 
-            session([ 'project_id' => $request->project_id ]);
-        }
+        $projects = Project::all();
        
-        $project = Project::find($request->project_id);
         $language_id = $request->language_id;
         $data = [];
         
-        $sources = Source::where('project_id', $project->id)->get()->load([
+        $sources = Source::all()->load([
             'translations'=>function ($query) {
                 $query->where('language_id', session()->get('language_id'));
             }
@@ -133,9 +129,9 @@ class TranslationController extends Controller
         
         $timestamp = Carbon::now();
         
-        $writer->save($path.$project->name.'_'.$language_id.'_'.$timestamp.'.xlsx');
+        $writer->save($path.'_'.$language_id.'_'.$timestamp.'.xlsx');
         
-        Session::flash('message', "File $project->name $language_id $timestamp.xlsx exported to $path");
+        Session::flash('message', "File $language_id $timestamp.xlsx exported to $path");
         
         return redirect()->route('export');
     }
@@ -211,9 +207,10 @@ class TranslationController extends Controller
         
         foreach ($translations_array as $key=>$item) 
         {
+            $row = $key + 1;
             if($item[0] == null || $item[1] == null)
             {
-                $import_errors[] = "ERROR - import file, row($key): missing source id or key";
+                $import_errors[] = "ERROR - import file, row($row): missing source id or key";
                 continue;
             }
                 
@@ -221,7 +218,7 @@ class TranslationController extends Controller
             
             if(!$source)
             {
-                $import_errors[] = "ERROR - import file, row($key): source(id=$item[0]) does not exist!";
+                $import_errors[] = "ERROR - import file, row($row): source(id=$item[0]) does not exist!";
                 continue;
             }
             
@@ -240,12 +237,12 @@ class TranslationController extends Controller
                 
                 if(!$en_translation)  
                 {
-                    $import_errors[] = "ERROR - import file, row($key): source(id=$source->id) has different key than import file. En translation doesn't exist."; 
+                    $import_errors[] = "ERROR - import file, row($row): source(id=$source->id) has different key than import file. En translation doesn't exist."; 
                     continue; 
                 }
                 elseif($en_translation->$translation != $item[1])
                 {
-                    $import_errors[] = "ERROR - import file, row($key): source(id=$source->id) has different key than import file. En translation exists."; 
+                    $import_errors[] = "ERROR - import file, row($row): source(id=$source->id) has different key than import file. En translation exists."; 
                     continue;
                 }
             }

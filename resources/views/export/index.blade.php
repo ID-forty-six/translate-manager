@@ -15,14 +15,6 @@
     <form role="form" action="{{ route('exportAction') }}" method='POST'>
         {{ csrf_field() }}
         <div class="box-body">
-              <div class="form-group">
-                <label for="project_id">Project</label>
-                <select id="project_id" name="project_id" class="form-control">
-                    @foreach( $projects as $project )
-                        <option value="{{ $project->id }}" {{ $project->id == session()->get('project_id') ? "selected" : ""}}>{{ $project->name }}</option>
-                    @endforeach
-                </select>
-            </div>
             <div class="form-group">
                 <label for="language_id">Language</label>
                 <select id="language_id" name="language_id" class="form-control">
