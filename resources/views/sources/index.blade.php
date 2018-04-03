@@ -17,25 +17,9 @@
 @endif
 
 <div class="box">
-<div class="box-body">
-   <form role="form" action={{ route('findSources') }} method='post'>
-        {{ csrf_field() }}
-              <div class="form-group">
-                  <label for="project_id">Project</label>
-                  <select id="project_id" name="project_id" class="form-control">
-                      
-                      @foreach( $projects as $project )
-                      
-                      <option value="{{ $project->id }}" {{ $project->id == session()->get('project_id') ? "selected" : ""}}>{{ $project->name }}</option>
-                      
-                      @endforeach
-                </select>
-            </div>
-            <div class="box-footer">
-            <button type="submit" class="btn btn-danger">Submit</button>
-        </div>
-    </form>
-</div>
+    <div class="box-body">
+        <a href="{{ route('findSources') }}" class="btn btn-danger btn-lg">Scan all projects</a>
+    </div>
 </div>
 
 @stop

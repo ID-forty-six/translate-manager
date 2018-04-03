@@ -21,7 +21,7 @@ Route::get('/home', 'HomeController@index')->name('home');
 
 Route::group(['middleware'=> ['auth']], function() {
 
-    Route::post('/sources/find', 'SourceController@findSources')->name('findSources');
+    Route::get('/sources/find', 'SourceController@findSources')->name('findSources');
     Route::get('/sources', 'SourceController@index')->name('sources');
 
     Route::resource('projects', 'ProjectController');

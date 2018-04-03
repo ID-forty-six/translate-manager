@@ -37,14 +37,10 @@ class SourceController extends Controller
         return view('sources.index')->with(['sources'=>$sources, 'projects'=>$projects ]);
     }
     
-    public function findSources(Request $request)
+    public function findSources()
     {
         
-        session([ 'project_id' => $request->project_id ]);
-        
-        $project = Project::find($request->project_id);
-        
-        $path = $project->path;
+        $projects = Project::all();
         
         $groupKeys = array();
         $stringKeys = array();
@@ -61,46 +57,70 @@ class SourceController extends Controller
 
         // Find all PHP + Twig files in the app folder, except for storage
         $finder = new Finder();
-        $finder->in($path)->exclude('storage')->name('*.php')->name('*.twig')->name('*.vue')->files();
         
-
-        /** @var \Symfony\Component\Finder\SplFileInfo $file */
-        foreach ($finder as $file) {
+        foreach($projects as $project)
+        {
+            $finder->in($project->path)->exclude('storage')->name('*.php')->name('*.twig')->name('*.vue')->files();
+            
+            /** @var \Symfony\Component\Finder\SplFileInfo $file */
+            foreach ($finder as $file) 
+            {
             // Search the current file for the pattern
-
-            if(preg_match_all("/$stringPattern/siU", $file->getContents(), $matches)) {
-                foreach ($matches['string'] as $key) {
-                    if (preg_match("/(^[a-zA-Z0-9_-]+([.][^\1)\ ]+)+$)/siU", $key, $groupMatches)) {
+                
+                if(preg_match_all("/$stringPattern/siU", $file->getContents(), $matches)) 
+                {
+                    foreach ($matches['string'] as $key) {
+                        if (preg_match("/(^[a-zA-Z0-9_-]+([.][^\1)\ ]+)+$)/siU", $key, $groupMatches)) 
+                        {
                         // group{.group}.key format, already in $groupKeys but also matched here
                         // do nothing, it has to be treated as a group
                         continue;
+                        }
+                        $stringKeys[] = $key;
                     }
-                    $stringKeys[] = $key;
                 }
             }
-        }
-        
-        // Remove duplicates
-        $stringKeys = array_unique($stringKeys);
-        
-        $count = 0;
-        
-        foreach($stringKeys as $key)
-        {
-            $source = Source::where('key', $key)->first();
             
-            if (!$source)
+            // Remove duplicates
+            $stringKeys = array_unique($stringKeys);
+            
+            $count = 0;
+        
+            foreach($stringKeys as $key)
             {
-                $source = new Source;
-                $source->key = $key;
-                $source->project_id = $project->id;
-                $source->save();
-                $count++;
+                if($this->checkDuplicates($key))
+                {
+                    continue;
+                }
+                
+                $source = Source::where('key', $key)->first();
+            
+                if (!$source)
+                {
+                    $source = new Source;
+                    $source->key = $key;
+                    $source->project_id = $project->id;
+                    $source->save();
+                    $count++;
+                }
             }
         }
         
         Session::flash('message', "Scan completed. $count new sources added");
         
         return redirect()->route('sources');
+    }
+    
+    public function checkDuplicates($key)
+    {
+        $sources = Source::all();
+        
+        foreach($sources as $source)
+        {
+            if($source->key == $key)
+            {
+                return true;
+            } 
+        }   
     }
 }
