@@ -94,7 +94,7 @@ class TranslationController extends Controller
             }
             else
             {
-                $en_translation = Translation::where('source_id', $source->id)->where('language_id', 'en-US')->first();
+                $en_translation = Translation::where('source_id', $source->id)->where('language_id', 'en-US')->where('translation', '!=', null)->first();
                 
                 if($en_translation)
                 {
