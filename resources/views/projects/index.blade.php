@@ -7,6 +7,9 @@
 @stop
 
 @section('content')
+
+@include('partials.errors')
+
 <div class="box">
     <div class="box-header">
         <h3 class="box-title">Projects</h3>
@@ -26,6 +29,9 @@
                     <td>{{ $project->name }}</td>
                     <td>{{ $project->framework }}</td>
                     <td>{{ $project->path }}</td>
+                    <td>
+                        <a href={{ route('projects.show', $project) }} class="btn btn-primary"><i class="fa fa-gear"></i>show</a><br>
+                    </td>
                     <td>
                         <a href={{ route('projects.edit', $project) }} class="btn btn-warning"><i class="fa fa-pencil"></i>edit</a><br>
                     </td>

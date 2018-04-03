@@ -115,7 +115,16 @@ class TranslationController extends Controller
         $path = storage_path('app/public/translations/');
         
         $spreadsheet = new Spreadsheet();
-        $sheet = $spreadsheet->getActiveSheet()->fromArray(
+        
+        
+        $sheet = $spreadsheet->getActiveSheet();
+        
+        //Create header row
+        $headers = ['id', 'key', session()->get('language_id')];
+        array_unshift($data, $headers);
+        
+        // populate excel file
+        $sheet->fromArray(
             $data,  
             NULL       
         );
@@ -139,6 +148,7 @@ class TranslationController extends Controller
         {
             $translation = Translation::find($request->translation_id); 
             $translation->translation = $request->translation;
+            $translation->is_published = 0;
             
             $translation->save();
         }
@@ -149,6 +159,7 @@ class TranslationController extends Controller
             $translation->translation = $request->translation;
             $translation->language_id = session()->get('language_id');
             $translation->project_id = $source->project_id;
+            $translation->is_published = 0;
             $translation->save(); 
         }
         
@@ -164,6 +175,7 @@ class TranslationController extends Controller
     
     public function importAction( Request $request )
     {
+        
         if (isset($request->language_id))
         { 
             session([ 'language_id' => $request->language_id ]);
@@ -183,21 +195,25 @@ class TranslationController extends Controller
         $spreadsheet = $reader->load($request->file('upload'));
         
         $translations_array = $spreadsheet->getActiveSheet()->toArray();
+        
+        // skip header row
+        array_shift( $translations_array );
     
         $sources = array();
         
-        $translations = Translation::where('project_id',$project_id)
+        /*$translations = Translation::where('project_id',$project_id)
                 ->where('language_id', $language_id)
-                ->get();
+                ->get();*/
         
-        $count = 0;
-        $import_errors = array();
+        $new_count = 0;
+        $update_count = 0;
+        $import_errors = [];
         
         foreach ($translations_array as $key=>$item) 
         {
             if($item[0] == null || $item[1] == null)
             {
-                $import_errors[$key] = "ERROR - import file, row($key): missing source id or key";
+                $import_errors[] = "ERROR - import file, row($key): missing source id or key";
                 continue;
             }
                 
@@ -205,7 +221,7 @@ class TranslationController extends Controller
             
             if(!$source)
             {
-                $import_errors[$key] = "ERROR - import file, row($key): source(id=$item[0]) does not exist!";
+                $import_errors[] = "ERROR - import file, row($key): source(id=$item[0]) does not exist!";
                 continue;
             }
             
@@ -224,19 +240,25 @@ class TranslationController extends Controller
                 
                 if(!$en_translation)  
                 {
-                    $import_errors[$key] = "ERROR - import file, row($key): source(id=$source->id) has different key than import file. En translation doesn't exist."; 
+                    $import_errors[] = "ERROR - import file, row($key): source(id=$source->id) has different key than import file. En translation doesn't exist."; 
                     continue; 
                 }
                 elseif($en_translation->$translation != $item[1])
                 {
-                    $import_errors[$key] = "ERROR - import file, row($key): source(id=$source->id) has different key than import file. En translation exists."; 
+                    $import_errors[] = "ERROR - import file, row($key): source(id=$source->id) has different key than import file. En translation exists."; 
                     continue;
                 }
             }
                 
             if($translation)
             {
+                if($translation->translation != $item[2])
+                {
+                     $update_count++;
+                }
+                
                 $translation->translation = $item[2];
+                $translation->is_published = 0;
                 $translation->save();  
             }
             else
@@ -246,40 +268,47 @@ class TranslationController extends Controller
                 $translation->translation = $item[2];
                 $translation->language_id = $language_id;
                 $translation->project_id = $project_id;
+                $translation->is_published = 0;
                 $translation->save();
-                $count++;
+                $new_count++;
             }
         }
-        die(print_r($import_errors));
         if($import_errors)
         {
-            Session::flash('errors', [$import_errors]);
+            Session::flash('errors', $import_errors);
         }
         
-        Session::flash('message', "Imported $count new translations");
+        Session::flash('message', "Imported $new_count new translations. Updated $update_count translations.");
         
         return redirect()->route('import');
     }
     
     public function publish()
     {
-        $project = Project::find($project_id);
+        $project = Project::find(session()->get('project_id'));
+        $language = Language::find(session()->get('language_id'));
+            
+        $translations = Translation::where('project_id', $project->id)
+                ->where('language_id', $language->id)
+                ->get();
         
         $translations_array = array();
         
         foreach($translations as $translation)
         {
             $translations_array[$translation->source->key] = $translation->translation;
+            $translation->is_published = 1;
+            $translation->save();
         } 
         
         $json = json_encode($translations_array);
         
-        $file_path = '/var/www/localhost/translate-manager/resources/lang/en.json';
+        $file_path = $project->path.'/resources/lang/'.$language->id.'.json';
         
         file_put_contents($file_path, $json);
         
-        Session::flash('message', "File $project->name_$language_id_$timestamp.xlsx imported to $path");
+        Session::flash('message', "$language->id language file has been published to $file_path");
         
-        return redirect()->route('import');
+        return redirect()->route('translations.index');
     }
 }

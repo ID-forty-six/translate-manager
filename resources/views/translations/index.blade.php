@@ -8,6 +8,12 @@
 
 @section('content')
 
+@include('partials.message')
+@include('partials.errors')
+<div class="box-footer">
+        <a href="{{ route('translations.publish') }}" class="btn btn-success pull-right btn-lg">Publish translations</a>
+</div>
+
 <div class="box">
       <form role="form" action={{ route('translations.index') }} method='GET'>
         {{ csrf_field() }}
@@ -58,14 +64,23 @@
                                 <input type="text" id="translation" name="translation" class="form-control input-lg">
                             @else
                                 @foreach( $source->translations as $translation )
-                                
                                 <input type="text" id="translation" name="translation" value="{{ $translation->translation }}" class="form-control input-lg">
                                 <input type="hidden" id="translation_id" name="translation_id" value="{{ $translation->id }}">
                                 
                                 @endforeach
                             @endif
-                                 <div class="input-group-btn">
-                                <button type="submit" class="btn btn-danger">Save</button>
+                                <div class="input-group-btn">
+                                    @if(!$source->translations->isEmpty())
+                                        @foreach( $source->translations as $translation )
+                                            @if($translation->is_published == 0)
+                                                <button type="submit" class="btn btn-success">Save (unpublished)</button>
+                                            @else
+                                                <button type="submit" class="btn btn-danger">Save</button>
+                                            @endif
+                                        @endforeach
+                                    @else
+                                        <button type="submit" class="btn btn-danger">Save</button>
+                                    @endif
                                 </div>
                             </div>
                         </form>
@@ -74,7 +89,6 @@
             @endforeach
             
         </table>
-    
 </div>
 
 @stop

@@ -8,13 +8,8 @@
 
 @section('content')
 
-@if( session()->has('message') )
-    <div class="box-body no-padding">
-        <div class="alert alert-success">
-            {{ session()->get('message') }}
-        </div>  
-    </div> 
-@endif
+@include('partials.message')
+@include('partials.errors')
 
 <div class="box box-primary">
     <form role="form" action="{{ route('exportAction') }}" method='POST'>

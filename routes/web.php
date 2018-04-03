@@ -33,5 +33,6 @@ Route::group(['middleware'=> ['auth']], function() {
     Route::get('/translations/import', 'TranslationController@import')->name('import');
     Route::post('/translations/importaction', 'TranslationController@importAction')->name('importAction');
     Route::post('/translations/findorcreate', 'TranslationController@findOrCreate')->name('translations.findOrCreate');
+    Route::get('/translations/publish', 'TranslationController@publish')->name('translations.publish');
     
 });

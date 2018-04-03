@@ -22,6 +22,7 @@ class CreateTranslationsTable extends Migration
 			$table->string('language_id');
             $table->string('translation')->nullable();
             $table->string('project_id');
+            $table->string('is_published');
 			$table->timestamps();
         });
     }

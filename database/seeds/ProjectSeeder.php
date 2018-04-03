@@ -20,5 +20,13 @@ class ProjectSeeder extends Seeder
 			'path' => '/var/www/localhost/sendinn5.5',
 			],
 		]);
+        
+        DB::table('projects')->insert([
+			[
+			'name'		=> 'test_project',
+			'framework' => 'laravel',
+			'path' => '/very/bad/path/test_project',
+			],
+		]);
     }
 }

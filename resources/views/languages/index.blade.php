@@ -16,7 +16,6 @@
             <tr>
                 <th>ID</th>
                 <th>Name</th>
-                <th>Progress</th>
                 <th>Status</th>
                 <th>Actions</th>
             </tr>
@@ -25,20 +24,11 @@
                     <td>{{ $language->id }}</td>
                     <td>{{ $language->name_ascii }}</td>
                     <td>
-                        <div class="progress progress-xs progress-striped active">
-                            <div class="progress-bar progress-bar-success" style="width: 90%"></div>
-                        </div>
-                        <span class="badge bg-green">90%</span>
-                    </td>
-                    <td>
-                        @if( $language->status == 'active')
+                        @if( $language->status == 1)
                             <p>Active</p>
                         @else
                             <p>Disabled</p>
                         @endif
-                    </td>
-                    <td>
-                        <a href={{ route('languages.edit', $language) }} class="btn btn-primary"><i class="fa fa-book"></i>translate</a><br>
                     </td>
                     <td>
                         <a href={{ route('languages.edit', $language) }} class="btn btn-warning"><i class="fa fa-pencil"></i>edit</a><br>
