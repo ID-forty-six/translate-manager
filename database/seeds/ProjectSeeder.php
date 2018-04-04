@@ -21,12 +21,5 @@ class ProjectSeeder extends Seeder
 			],
 		]);
         
-        DB::table('projects')->insert([
-			[
-			'name'		=> 'test_project',
-			'framework' => 'laravel',
-			'path' => '/very/bad/path/test_project',
-			],
-		]);
     }
 }

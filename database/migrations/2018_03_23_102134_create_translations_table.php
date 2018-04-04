@@ -18,11 +18,19 @@ class CreateTranslationsTable extends Migration
         Schema::create('translations', function (Blueprint $table) {
 			
 			$table->increments('id');
-			$table->integer('source_id');
+            
+			$table->integer('source_id')->unsigned();
+            $table->foreign('source_id')->references('id')->on('sources');
+            
 			$table->string('language_id');
+            $table->foreign('language_id')->references('id')->on('languages');
+            
             $table->string('translation')->nullable();
-            $table->string('project_id');
-            $table->string('is_published');
+            
+            $table->integer('project_id')->unsigned();
+            $table->foreign('project_id')->references('id')->on('projects');
+            
+            $table->integer('is_published');
 			$table->timestamps();
         });
     }

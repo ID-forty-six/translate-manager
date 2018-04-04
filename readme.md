@@ -36,5 +36,9 @@ Pasirinkus kalba, galima importuoti translationus. Priimamas .xlsx formato faila
 
 Išsaugojus arba importavus, translationai, kurie dar nepublishinti, pasidaro zali. 
 
-Publish translations mygtukas - perrašo visų projektų json failus. Kiekvienam projekte - tik to projekto vertimai. 
+Publish translations mygtukas - perrašo visų projektų json failus. Kiekvienam projekte - tik to projekto vertimai. Naudojama publish:translations komanda.
+
+## Commands
+
+php artisan publish:translations - publishes all translations.
 

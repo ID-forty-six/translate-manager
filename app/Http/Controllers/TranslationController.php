@@ -2,19 +2,20 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\Request;
+use DB;
+use Storage;
+use Session;
+use Artisan;
+use Carbon\Carbon;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx as WriterXlsx;
+use PhpOffice\PhpSpreadsheet\Reader\Xlsx as ReaderXlsx;
 
 use App\Translation;
 use App\Source;
 use App\Project;
 use App\Language;
-use Illuminate\Http\Request;
-use DB;
-use Carbon\Carbon;
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx as WriterXlsx;
-use PhpOffice\PhpSpreadsheet\Reader\Xlsx as ReaderXlsx;
-use Storage;
-use Session;
 
 
 class TranslationController extends Controller
@@ -263,6 +264,10 @@ class TranslationController extends Controller
                 }
             }
             
+            $translation = Translation::where('source_id', $source->id)
+                ->where('language_id', $language_id)
+                ->first();
+            
             // if source translation already exists, update otherwise, create new translation
             if($translation)
             {
@@ -304,31 +309,7 @@ class TranslationController extends Controller
     public function publish()
     {
         
-        $projects = Project::all();
-        $languages = Language::all();
-        
-        foreach($projects as $project)
-        {
-            foreach($languages as $language)
-            {
-                $translations = Translation::where('language_id', $language->id)->where('project_id', $project->id)->get();
-                
-                $translations_array = array();
-                
-                foreach($translations as $translation)
-                {
-                    $translations_array[$translation->source->key] = $translation->translation;
-                    $translation->is_published = 1;
-                    $translation->save();
-                } 
-                
-                $json = json_encode($translations_array);
-                
-                $file_path = $project->path.'/resources/lang/'.$language->id.'.json';
-                
-                file_put_contents($file_path, $json);  
-            }   
-        }
+        Artisan::call('publish:translations');
         
         Session::flash('message', "All translations has been published");
         
