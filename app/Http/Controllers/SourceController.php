@@ -37,14 +37,21 @@ class SourceController extends Controller
         return view('sources.index')->with(['sources'=>$sources, 'projects'=>$projects ]);
     }
     
+    /*
+     * find all translation sources in all projects
+     */
     public function findSources()
     {
         
         $projects = Project::all();
         
+        // set up empty key array
         $stringKeys = array();
+        
+        // possible translation start functions
         $functions =  array('trans', 'trans_choice', 'Lang::get', 'Lang::choice', 'Lang::trans', 'Lang::transChoice', '@lang', '@choice', '__');
-
+        
+        // translation pattern
         $stringPattern =
             "[^\w|>]".                                     // Must not have an alphanum or _ or > before real method
             "(".implode('|', $functions) .")".             // Must start with one of the functions
@@ -54,19 +61,21 @@ class SourceController extends Controller
             "\k{quote}".                                   // Match " or ' previously matched
             "[\),]";                                       // Close parentheses or new parameter
         
+        // set count
         $count = 0;
         
+        // loop throw projects
         foreach($projects as $project)
         {
+            // use finder 
             $finder = new Finder();
             
+            // set file endings in which to search for
             $finder->in($project->path)->exclude('storage')->name('*.php')->name('*.twig')->name('*.vue')->files();
-            
-            /** @var \Symfony\Component\Finder\SplFileInfo $file */
+        
             foreach ($finder as $file) 
             {
             // Search the current file for the pattern
-                
                 if(preg_match_all("/$stringPattern/siU", $file->getContents(), $matches)) 
                 {
                     foreach ($matches['string'] as $key) {
@@ -84,8 +93,10 @@ class SourceController extends Controller
             // Remove duplicates
             $stringKeys = array_unique($stringKeys);
         
+            // create sources from found transaltion keys
             foreach($stringKeys as $key)
             {
+                // check if identical sourcedon't already exist in this project
                 $source = Source::where('project_id', $project->id)->where('key', $key)->first();
                 if (!$source)
                 {

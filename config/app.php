@@ -235,5 +235,6 @@ return [
     */
     
     'frameworks' => ['laravel'],
+    'export_path' => env('EXPORT_PATH'),
 
 ];

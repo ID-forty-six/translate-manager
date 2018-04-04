@@ -11,17 +11,20 @@ use Illuminate\Http\Request;
 use DB;
 use Carbon\Carbon;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx as WriterXlsx;
+use PhpOffice\PhpSpreadsheet\Reader\Xlsx as ReaderXlsx;
 use Storage;
 use Session;
 
 
 class TranslationController extends Controller
 {
+
     public function index(Request $request)
     {
         $projects = Project::all()->load('sources');
         
+        // sessions vars
         if (isset($request->language_id))
         { 
             session([ 'language_id' => $request->language_id ]);
@@ -40,14 +43,14 @@ class TranslationController extends Controller
             session([ 'project_id' => $projects->first()->id ]);
         }
         
+        // data
         $projects = Project::all()->load('sources');
         $languages = Language::all();
         $translations = Translation::all()->load('source');
         
-        $sources = Source::all()->load([
+        $sources = Source::where('project_id', session()->get('project_id'))->get()->load([
             'translations'=>function ($query) {
-                $query->where('language_id', session()->get('language_id'))
-                    ->where('project_id', session()->get('project_id'));
+                $query->where('language_id', session()->get('language_id'));
             }
         ]);
         
@@ -59,37 +62,47 @@ class TranslationController extends Controller
     {
         $projects = Project::all();
         $languages = Language::all();
+        
         return view('export.index')->with(['projects'=>$projects, 'languages'=>$languages]);   
     }
     
     public function exportAction( Request $request )
     {
+        // sessions vars
         if (isset($request->language_id))
         { 
             session([ 'language_id' => $request->language_id ]);
         }
        
         $language_id = $request->language_id;
+        
+        // init empty data array
         $data = [];
         
+        // only get translations with current language
         $sources = Source::all()->load([
             'translations'=>function ($query) {
                 $query->where('language_id', session()->get('language_id'));
             }
         ]);
         
+        // generate data array
         foreach($sources as $key => $source)
         {
+            // 1 column: source ID
             $data[$key][] = $source->id;
             
+            // if language is en-US then take source->key
             if($language_id == "en-US")
             {
                 $data[$key][] = $source->key;
             }
             else
             {
+                // check if source has en_us translation and use it instead of source
                 $en_translation = Translation::where('source_id', $source->id)->where('language_id', 'en-US')->where('translation', '!=', null)->first();
                 
+                // 2 column: en-US translation or source-key
                 if($en_translation)
                 {
                     $data[$key][] = $en_translation->translation;
@@ -100,17 +113,17 @@ class TranslationController extends Controller
                 }
             }
             
+            //3 column: translation
             foreach($source->translations as $t_key => $translation)
             {
                 $data[$key][] = $translation->translation;
             }
         }
         
-        $path = storage_path('app/public/translations/');
-        
+        // create new spreadsheet
         $spreadsheet = new Spreadsheet();
         
-        
+        // select sheet
         $sheet = $spreadsheet->getActiveSheet();
         
         //Create header row
@@ -123,17 +136,27 @@ class TranslationController extends Controller
             NULL       
         );
         
-        $writer = new Xlsx($spreadsheet);
+        // create excel writer
+        $writer = new WriterXlsx($spreadsheet);
         
-        $timestamp = Carbon::now();
+        // create file name
+        $timestamp = strtotime(Carbon::now());
+        $fileName = $language_id.'_'.$timestamp.'.xlsx';
         
-        $writer->save($path.'_'.$language_id.'_'.$timestamp.'.xlsx');
+        // path where export files will be saved
+        $path = config('app.export_path');
         
-        Session::flash('message', "File $language_id $timestamp.xlsx exported to $path");
+        // save file to path
+        $writer->save($path.$fileName);
+        
+        Session::flash('message', "File $fileName exported to $path");
         
         return redirect()->route('export');
     }
     
+     /*
+      * Used for creating or updating translations in UI
+      */
     public function findOrCreate(Request $request)
     {
         $source = Source::find($request->source_id);
@@ -162,74 +185,69 @@ class TranslationController extends Controller
     
     public function import()
     {
-        $projects = Project::all();
         $languages = Language::all();
-        return view('import.index')->with(['projects'=>$projects, 'languages'=>$languages]);   
+        
+        return view('import.index')->with(['languages'=>$languages]);   
     }
     
     public function importAction( Request $request )
     {
-        
+        // language session var
         if (isset($request->language_id))
         { 
             session([ 'language_id' => $request->language_id ]);
         }
         
-        if (isset($request->project_id))
-        { 
-            session([ 'project_id' => $request->project_id ]);
-        }
-        
         $language_id = session()->get('language_id');
-        $project_id = session()->get('project_id');
         
-        //TODO perkelti i use
-        $reader = new \PhpOffice\PhpSpreadsheet\Reader\Xlsx();
+        // create xlsx reader
+        $reader = new ReaderXlsx;
         $reader->setReadDataOnly(true);
+        
+        // load spreadsheet
         $spreadsheet = $reader->load($request->file('upload'));
         
+        // populate array from loaded excel file
         $translations_array = $spreadsheet->getActiveSheet()->toArray();
         
-        // skip header row
+        // delete header row
         array_shift( $translations_array );
     
         $sources = array();
         
-        /*$translations = Translation::where('project_id',$project_id)
-                ->where('language_id', $language_id)
-                ->get();*/
-        
+        // set up counts
         $new_count = 0;
         $update_count = 0;
+        
+        // set up empty errors aray
         $import_errors = [];
         
+        //
         foreach ($translations_array as $key=>$item) 
         {
             $row = $key + 1;
+            
             if($item[0] == null || $item[1] == null)
             {
                 $import_errors[] = "ERROR - import file, row($row): missing source id or key";
                 continue;
             }
-                
+            
+            // randam source pagal pirmo stulpelio nurodyta id
             $source = Source::find($item[0]);
             
+            // check if source exists
             if(!$source)
             {
                 $import_errors[] = "ERROR - import file, row($row): source(id=$item[0]) does not exist!";
                 continue;
             }
             
-            $translation = Translation::where('source_id', $source->id)
-                ->where('project_id', $project_id)
-                ->where('language_id', $language_id)
-                ->first();
-            
             // tikrinam ar sutampa ID ir keys
             if( $item[1] != $source->key)
             {
+                // jei nesutampa, tikrinam ar sutam su en-US translationu
                 $en_translation = Translation::where('source_id', $source->id)
-                    ->where('project_id', $project_id)
                     ->where('language_id', 'en-US')
                     ->first();
                 
@@ -244,7 +262,8 @@ class TranslationController extends Controller
                     continue;
                 }
             }
-                
+            
+            // if source translation already exists, update otherwise, create new translation
             if($translation)
             {
                 if($translation->translation != $item[2])
@@ -262,12 +281,13 @@ class TranslationController extends Controller
                 $translation->source_id = $source->id;
                 $translation->translation = $item[2];
                 $translation->language_id = $language_id;
-                $translation->project_id = $project_id;
+                $translation->project_id = $source->project_id;
                 $translation->is_published = 0;
                 $translation->save();
                 $new_count++;
             }
         }
+        
         if($import_errors)
         {
             Session::flash('errors', $import_errors);
@@ -278,31 +298,39 @@ class TranslationController extends Controller
         return redirect()->route('import');
     }
     
+    /*
+     * Publish all translations to projects
+     */
     public function publish()
     {
-        $project = Project::find(session()->get('project_id'));
-        $language = Language::find(session()->get('language_id'));
-            
-        $translations = Translation::where('project_id', $project->id)
-                ->where('language_id', $language->id)
-                ->get();
         
-        $translations_array = array();
+        $projects = Project::all();
+        $languages = Language::all();
         
-        foreach($translations as $translation)
+        foreach($projects as $project)
         {
-            $translations_array[$translation->source->key] = $translation->translation;
-            $translation->is_published = 1;
-            $translation->save();
-        } 
+            foreach($languages as $language)
+            {
+                $translations = Translation::where('language_id', $language->id)->where('project_id', $project->id)->get();
+                
+                $translations_array = array();
+                
+                foreach($translations as $translation)
+                {
+                    $translations_array[$translation->source->key] = $translation->translation;
+                    $translation->is_published = 1;
+                    $translation->save();
+                } 
+                
+                $json = json_encode($translations_array);
+                
+                $file_path = $project->path.'/resources/lang/'.$language->id.'.json';
+                
+                file_put_contents($file_path, $json);  
+            }   
+        }
         
-        $json = json_encode($translations_array);
-        
-        $file_path = $project->path.'/resources/lang/'.$language->id.'.json';
-        
-        file_put_contents($file_path, $json);
-        
-        Session::flash('message', "$language->id language file has been published to $file_path");
+        Session::flash('message', "All translations has been published");
         
         return redirect()->route('translations.index');
     }
