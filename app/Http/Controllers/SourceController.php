@@ -42,7 +42,6 @@ class SourceController extends Controller
         
         $projects = Project::all();
         
-        $groupKeys = array();
         $stringKeys = array();
         $functions =  array('trans', 'trans_choice', 'Lang::get', 'Lang::choice', 'Lang::trans', 'Lang::transChoice', '@lang', '@choice', '__');
 
@@ -54,12 +53,13 @@ class SourceController extends Controller
             "(?P<string>(?:\\\k{quote}|(?!\k{quote}).)*)". // Match any string that can be {quote} escaped
             "\k{quote}".                                   // Match " or ' previously matched
             "[\),]";                                       // Close parentheses or new parameter
-
-        // Find all PHP + Twig files in the app folder, except for storage
-        $finder = new Finder();
+        
+        $count = 0;
         
         foreach($projects as $project)
         {
+            $finder = new Finder();
+            
             $finder->in($project->path)->exclude('storage')->name('*.php')->name('*.twig')->name('*.vue')->files();
             
             /** @var \Symfony\Component\Finder\SplFileInfo $file */
@@ -83,18 +83,10 @@ class SourceController extends Controller
             
             // Remove duplicates
             $stringKeys = array_unique($stringKeys);
-            
-            $count = 0;
         
             foreach($stringKeys as $key)
             {
-                if($this->checkDuplicates($key))
-                {
-                    continue;
-                }
-                
-                $source = Source::where('key', $key)->first();
-            
+                $source = Source::where('project_id', $project->id)->where('key', $key)->first();
                 if (!$source)
                 {
                     $source = new Source;
@@ -109,18 +101,5 @@ class SourceController extends Controller
         Session::flash('message', "Scan completed. $count new sources added");
         
         return redirect()->route('sources');
-    }
-    
-    public function checkDuplicates($key)
-    {
-        $sources = Source::all();
-        
-        foreach($sources as $source)
-        {
-            if($source->key == $key)
-            {
-                return true;
-            } 
-        }   
     }
 }

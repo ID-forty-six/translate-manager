@@ -68,8 +68,6 @@ class TranslationController extends Controller
         { 
             session([ 'language_id' => $request->language_id ]);
         }
-        
-        $projects = Project::all();
        
         $language_id = $request->language_id;
         $data = [];
