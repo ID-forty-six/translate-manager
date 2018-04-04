@@ -18,7 +18,7 @@ Nuskanuojam visus translation failus iš nurodytų projektų.
 
 ## 4. Export
 
-Pasirinkus kalba, galima exsportuoti turimus sources ir tos kalbos translationus į .xlsx formato faila, kuris susikurs .ENV EXPORT_PATH nurodytoje direktorijoje. Failo formatas:
+Pasirinkus kalbą, galima exsportuoti turimus sources ir tos kalbos translationus į .xlsx formato faila, kuris susikurs .ENV EXPORT_PATH nurodytoje direktorijoje. Failo formatas:
 
 1. Source id;
 2. Source key arba jeigu egzistuoja, en-US translation. Pastaba: en-US exsporte imamas source key, kitose kalbose, ieškome en-US translationo.
@@ -32,7 +32,7 @@ Pasirinkus kalba, galima importuoti translationus. Priimamas .xlsx formato faila
 
 ## 6. Translations
 
-Šiame tabe yra pagal projekta ir kalba išrušiuoti sources ir jų translationai. Galima juos editinti ir rankiniu būdu. 
+Šiame tabe yra pagal projektą ir kalbą išrūšiuoti sources ir jų translationai. Galima juos editinti ir rankiniu būdu. 
 
 Išsaugojus arba importavus, translationai, kurie dar nepublishinti, pasidaro zali. 
 
