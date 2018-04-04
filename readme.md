@@ -6,35 +6,35 @@ EXPORT_PATH=
 
 ## 1. Languages
 
-Isivedame kalbas.
+Įsivedame kalbas.
 
 ## 2. Projects
 
-Isivedame projektus.
+Įsivedame projektus.
 
 ## 3. Scan
 
-Nuskanuojam visus translation failus is nurodytu projektu. 
+Nuskanuojam visus translation failus iš nurodytų projektų. 
 
 ## 4. Export
 
-Pasirinkus kalba, galima exsportuoti turimus sources ir tos kalbos translationus i .xlsx formato faila, kuris susikurs .ENV EXPORT_PATH nurodytoje direktorijoje. Failo formatas:
+Pasirinkus kalba, galima exsportuoti turimus sources ir tos kalbos translationus į .xlsx formato faila, kuris susikurs .ENV EXPORT_PATH nurodytoje direktorijoje. Failo formatas:
 
 1. Source id;
-2. Source key arba jeigu egzistuoja, en-US translation. Pastaba: en-US exsporte imamas source key, kitose kalbose, ieskome en-US translationo.
+2. Source key arba jeigu egzistuoja, en-US translation. Pastaba: en-US exsporte imamas source key, kitose kalbose, ieškome en-US translationo.
 3. Translationas, jei toks egzistuoja.
 
-Visu turimu projektu sourcai importuojami i viena excel faila. Veliau juos galime atskirti pagal source id.
+Visų turimų projektų sourcai importuojami į viena excel failą. Vėliau juos galime atskirti pagal source id.
 
 ## 5. Import
 
-Pasirinkus kalba, galima importuoti traslationus. Priimamas .xlsx formato failas identisku formatu kaip ir exsportinime.
+Pasirinkus kalba, galima importuoti translationus. Priimamas .xlsx formato failas identišku formatu kaip ir exsportinime.
 
 ## 6. Translations
 
-Siame tabe yra pagal projekta ir kalba isrusiuoti sources ir ju translationai. Galima juos editinti ir rankiniu budu. 
+Šiame tabe yra pagal projekta ir kalba išrušiuoti sources ir jų translationai. Galima juos editinti ir rankiniu būdu. 
 
-Uzsaugojus arba importavus, translationai, kurie dar nepublishinti, pasidaro zali. 
+Išsaugojus arba importavus, translationai, kurie dar nepublishinti, pasidaro zali. 
 
-Publish translations mygtukas - perraso visu projektu json failus. Kiekvienam projekte - tik to projekto vertimai.
+Publish translations mygtukas - perrašo visų projektų json failus. Kiekvienam projekte - tik to projekto vertimai. 
 
