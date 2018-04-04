@@ -28,7 +28,6 @@ class LanguageController extends Controller
         $language->short = $request->short;
         $language->name = $request->name;
         $language->name_ascii = $request->name_ascii;
-        $language->status = $request->status;
         
         $language->save();
         

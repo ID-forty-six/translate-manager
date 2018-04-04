@@ -21,7 +21,7 @@ class CreateLanguagesTable extends Migration
             $table->string('short');
             $table->string('name');
             $table->string('name_ascii');
-            $table->tinyInteger('status');
+            $table->tinyInteger('status')->default(1);
             $table->timestamps();
         });
         

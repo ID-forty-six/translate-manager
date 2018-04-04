@@ -26,10 +26,6 @@
                 <label for="name">Name ascii</label>
                 <input type="text" class="form-control" id="name_ascii" name="name_ascii" value="{{ $language->name_ascii }}" placeholder="Enter language name ascii" required>
             </div>
-            <div class="form-group">
-                <label for="name">Status</label>
-                <input type="number" class="form-control" id="status" name="status" value="{{ $language->status }}" placeholder="Enter language status" required>
-            </div>
         </div>
     
         <div class="box-footer">
