@@ -62,7 +62,6 @@
             <td>{{ $value['id'] }}</td>
             <td>{{ $value['key'] }}</td>
             <td>
-                <p>test{{ $value['translation']['id'] }}</p>
                 <form role="form" action={{ route('translations.findOrCreate') }} method='post'>
                             
                     {{ csrf_field() }}
