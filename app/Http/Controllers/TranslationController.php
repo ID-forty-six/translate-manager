@@ -26,13 +26,22 @@ class TranslationController extends Controller
         $projects = Project::all()->load('sources');
         
         // sessions vars
-        if (isset($request->language_id))
+        if (isset($request->from_lang_id))
         { 
-            session([ 'language_id' => $request->language_id ]);
+            session([ 'from_lang_id' => $request->from_lang_id ]);
         }
-        elseif(!session()->has('language_id'))
+        elseif(!session()->has('from_lang_id'))
         {
-            session([ 'language_id' => 'en-US' ]);
+            session([ 'from_lang_id' => 'en-US' ]);
+        }
+        
+        if (isset($request->to_lang_id))
+        { 
+            session([ 'to_lang_id' => $request->to_lang_id ]);
+        }
+        elseif(!session()->has('to_lang_id'))
+        {
+            session([ 'to_lang_id' => 'en-US' ]);
         }
         
         if (isset($request->project_id))
@@ -49,13 +58,45 @@ class TranslationController extends Controller
         $languages = Language::all();
         $translations = Translation::all()->load('source');
         
-        $sources = Source::where('project_id', session()->get('project_id'))->get()->load([
-            'translations'=>function ($query) {
-                $query->where('language_id', session()->get('language_id'));
-            }
-        ]);
+        $sources = Source::where('project_id', session()->get('project_id'))->get();
         
-        return view('translations.index')->with(['projects'=>$projects, 'languages'=>$languages, 'translations'=>$translations, 'sources'=>$sources]);   
+        $keys = array();
+        
+        foreach($sources as $source)
+        {
+            $keys[$source->id]['id'] = $source->id;
+           
+            if(session()->get('from_lang_id') == 'en-US')
+            {
+                 $keys[$source->id]['key'] = $source->key;
+            }
+            else
+            {
+                $key = $source->translations->where('language_id', session()->get('from_lang_id'))->first();
+                
+                if($key && $key->translation)
+                {
+                    $keys[$source->id]['key'] = $key->translation;
+                }
+                else
+                {
+                    $keys[$source->id]['key'] = $source->key;
+                }
+            }
+            
+            $translation = $source->translations->where('language_id', session()->get('to_lang_id'))->first();
+                
+            if($translation)
+            {
+                $keys[$source->id]['translation'] = $translation;
+            }
+            else
+            {
+                $keys[$source->id]['translation'] = null;
+            }
+        }
+        
+        return view('translations.index')->with(['projects'=>$projects, 'languages'=>$languages, 'translations'=>$translations, 'sources'=>$sources, 'keys'=>$keys]);   
     }
     
     
@@ -160,9 +201,10 @@ class TranslationController extends Controller
       */
     public function findOrCreate(Request $request)
     {
+
         $source = Source::find($request->source_id);
-            
-        if ($request->has('translation_id')) 
+           
+        if (isset($request->translation_id)) 
         {
             $translation = Translation::find($request->translation_id); 
             $translation->translation = $request->translation;
@@ -175,7 +217,7 @@ class TranslationController extends Controller
             $translation = new Translation;
             $translation->source_id = $request->source_id;
             $translation->translation = $request->translation;
-            $translation->language_id = session()->get('language_id');
+            $translation->language_id = session()->get('to_lang_id');
             $translation->project_id = $source->project_id;
             $translation->is_published = 0;
             $translation->save(); 
@@ -193,6 +235,9 @@ class TranslationController extends Controller
     
     public function importAction( Request $request )
     {
+
+        //preg_match_all("/\:\w+/ium", $test, $matches);
+        
         // language session var
         if (isset($request->language_id))
         { 
@@ -226,7 +271,10 @@ class TranslationController extends Controller
         //
         foreach ($translations_array as $key=>$item) 
         {
-            $row = $key + 1;
+            // error row will be +2 cuz of start from 0 and header row
+            $row = $key + 2;
+            
+            preg_match_all("/\:\w+/ium", $item[2], $trans_matches);
             
             if($item[0] == null || $item[1] == null)
             {
@@ -257,11 +305,34 @@ class TranslationController extends Controller
                     $import_errors[] = "ERROR - import file, row($row): source(id=$source->id) has different key than import file. En translation doesn't exist."; 
                     continue; 
                 }
-                elseif($en_translation->$translation != $item[1])
+                
+                // tikrinam ar sutampa :var masyvai en-US translatione ir faile
+                preg_match_all("/\:\w+/ium", $en_translation->translation, $src_matches);
+              
+                if($src_matches != $trans_matches && $item[2] != null)
+                {
+                    $import_errors[] = "ERROR - import file, row($row): translated variables!"; 
+                    continue;  
+                }
+                
+                if($en_translation->$translation != $item[1])
                 {
                     $import_errors[] = "ERROR - import file, row($row): source(id=$source->id) has different key than import file. En translation exists."; 
                     continue;
+                }       
+                
+            }
+            else
+            {
+                // tikrinam ar sutampa :var masyvai source->key ir faile
+                preg_match_all("/\:\w+/ium", $source->key, $src_matches);
+              
+                if($src_matches != $trans_matches && $item[2] != null)
+                {
+                    $import_errors[] = "ERROR - import file, row($row): translated variables!"; 
+                    continue;  
                 }
+                
             }
             
             $translation = Translation::where('source_id', $source->id)
